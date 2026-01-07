@@ -4,7 +4,7 @@ Hector Perez, Christian Hubbs, Can Li
 9/14/2020
 '''
 
-import gym
+import gymnasium as gym
 import itertools
 import numpy as np
 import networkx as nx
@@ -466,7 +466,7 @@ class NetInvMgmtMasterEnv(gym.Env):
             # update stae
             self._update_state()
 
-        return self.state, reward, done, {}
+        return self.state, reward, done, False, {}
     
     def sample_action(self):
         '''
@@ -477,8 +477,10 @@ class NetInvMgmtMasterEnv(gym.Env):
     def step(self, action):
         return self._STEP(action)
 
-    def reset(self):
-        return self._RESET()
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+             self.seed(seed)
+        return self._RESET(), {}
 
     def plot_network(self):
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
