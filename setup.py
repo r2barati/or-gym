@@ -12,12 +12,6 @@ with open(os.path.join('or_gym', 'version.py')) as version_file:
 
 VERSION = version.split("=")[-1].replace("'", "")
 
-# version = {}
-# with open("or_gym/version.py") as fp:
-    # exec(fp.read(), version)
-# later on we use: version['__version__']
-# from or_gym.version import VERSION
-
 setup(name='or-gym',
 	version=VERSION,
 	description='OR-Gym: A set of environments for developing reinforcement learning agents for OR problems.',
@@ -26,7 +20,7 @@ setup(name='or-gym',
 	url='https://github.com/hubbs5/or-gym',
 	packages=find_packages(),
 	install_requires=[
-		'gym<=0.21.0',
+		'gymnasium>=0.26.0',
 		'numpy>=1.16.1',
 		'pandas>=1.2',
 		'scipy>=1.0',

@@ -8,6 +8,7 @@ is satisfied.
 import or_gym
 from or_gym.envs.env_list import ENV_LIST
 import traceback
+import numpy as np
 
 def pytest_generate_tests(metafunc):
     idlist = []
@@ -43,12 +44,29 @@ class TestEnv:
         EPISODES = 100
         env = self._build_env(env_name)
         for ep in range(EPISODES):
-            state = env.reset()
+            # Gymnasium reset returns (obs, info)
+            reset_return = env.reset()
+            if isinstance(reset_return, tuple) and len(reset_return) == 2:
+                state, info = reset_return
+            else:
+                state = reset_return # Legacy gym
+
             while True:
+                # Check if state is in observation space
                 assert env.observation_space.contains(state), \
                     f"State out of range of observation space: {state}"
+
                 action = env.action_space.sample()
-                state, reward, done, info = env.step(action)
+                step_result = env.step(action)
+
+                # Gymnasium step returns (obs, reward, terminated, truncated, info)
+                # Old gym returns (obs, reward, done, info)
+                if len(step_result) == 5:
+                    state, reward, terminated, truncated, info = step_result
+                    done = terminated or truncated
+                else:
+                    state, reward, done, info = step_result
+
                 if done:
                     break
         
