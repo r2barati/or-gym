@@ -4,9 +4,9 @@ Paper: https://arxiv.org/abs/1911.10641
 GitHub: https://github.com/awslabs/or-rl-benchmarks
 '''
 import numpy as np
-import gym
-from gym import spaces, logger
-from gym.utils import seeding
+import gymnasium as gym
+from gymnasium import spaces, logger
+from gymnasium.utils import seeding
 from or_gym.utils import assign_env_config
 import copy
 
@@ -129,10 +129,16 @@ class BinPackingEnv(gym.Env):
             return state
     
     def get_item(self):
+        if hasattr(self, "np_random"):
+            return self.np_random.choice(self.item_sizes, p=self.item_probs)
         return np.random.choice(self.item_sizes, p=self.item_probs)
         
     def sample_action(self):
         return self.action_space.sample()
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
     
     def _RESET(self):
         self.current_weight = 0

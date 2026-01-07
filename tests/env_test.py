@@ -43,12 +43,21 @@ class TestEnv:
         EPISODES = 100
         env = self._build_env(env_name)
         for ep in range(EPISODES):
-            state = env.reset()
+            reset_result = env.reset()
+            if isinstance(reset_result, tuple):
+                state = reset_result[0]
+            else:
+                state = reset_result
             while True:
                 assert env.observation_space.contains(state), \
                     f"State out of range of observation space: {state}"
                 action = env.action_space.sample()
-                state, reward, done, info = env.step(action)
+                step_result = env.step(action)
+                if len(step_result) == 5:
+                    state, reward, terminated, truncated, info = step_result
+                    done = terminated or truncated
+                else:
+                    state, reward, done, info = step_result
                 if done:
                     break
         

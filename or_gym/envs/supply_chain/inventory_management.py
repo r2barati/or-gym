@@ -4,7 +4,7 @@ Hector Perez, Christian Hubbs, Owais Sarwar
 4/14/2020
 '''
 
-import gym
+import gymnasium as gym
 import itertools
 import numpy as np
 from scipy.stats import *
@@ -268,7 +268,7 @@ class InvManagementMasterEnv(gym.Env):
         c = self.supply_capacity # capacity
         self.action_log[n] = R.copy()
         # available inventory at the m+1 stage (note: last stage has unlimited supply)
-        Im1 = np.append(I[1:], np.Inf) 
+        Im1 = np.append(I[1:], np.inf) 
         
         # place replenishment order
         if n>=1: # add backlogged replenishment orders to current request
@@ -376,7 +376,7 @@ class InvManagementMasterEnv(gym.Env):
         R = z - IP # replenishmet order to reach zopt
 
         # check if R can actually be fulfilled (capacity and inventory constraints)
-        Im1 = np.append(self.I[n,1:], np.Inf) # available inventory at the m+1 stage
+        Im1 = np.append(self.I[n,1:], np.inf) # available inventory at the m+1 stage
                                             # NOTE: last stage has unlimited raw materials
         Rpos = np.column_stack((np.zeros(len(R)),R)) # augmented materix to get replenishment only if positive
         A = np.column_stack((c, np.max(Rpos,axis=1), Im1)) # augmented matrix with c, R, and I_m+1 as columns

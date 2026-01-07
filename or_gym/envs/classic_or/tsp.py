@@ -1,6 +1,6 @@
 import numpy as np
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 from or_gym import utils
 from copy import copy, deepcopy
 import matplotlib.pyplot as plt
@@ -111,15 +111,15 @@ class TSPEnv(gym.Env):
         node_connections[:, visited] = -1
         node_connections[np.where(self.adjacency_matrix==0)] = 0
 
-        connections = node_connections.flatten().astype(int)
-        obs = np.hstack([self.current_node, connections], dtype=np.int32)
+        connections = node_connections.flatten().astype(np.int32)
+        obs = np.hstack([self.current_node, connections]).astype(np.int32)
         if self.mask:
-            mask = node_connections[self.current_node]
+            mask = node_connections[self.current_node].astype(np.int8)
             # mask = np.array([1 if c==1 and v==0 else 0 
             #     for c, v in zip(cons_from_node, self.visit_log.values())])
             state = {
                 "action_mask": mask,
-                "avail_actions": np.ones(self.N, dtype=np.uint8),
+                "avail_actions": np.ones(self.N, dtype=np.int8),
                 "state": obs,
             }
         else:
@@ -292,12 +292,12 @@ class TSPDistCost(TSPEnv):
         return distance_matrix
 
     def _update_state(self):
-        mask = np.where(self.visit_log==0, 0 , 1)
-        obs = np.hstack([self.current_node, mask])
+        mask = np.where(self.visit_log==0, 0 , 1).astype(np.int32)
+        obs = np.hstack([self.current_node, mask]).astype(np.int32)
         if self.mask:
             state = {
-                "avail_actions": np.ones(self.N),
-                "action_mask": mask,
+                "avail_actions": np.ones(self.N, dtype=np.int8),
+                "action_mask": mask.astype(np.int8),
                 "state": obs
             }
         else:

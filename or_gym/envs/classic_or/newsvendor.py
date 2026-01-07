@@ -3,8 +3,8 @@ Example taken from Balaji et al.
 Paper: https://arxiv.org/abs/1911.10641
 GitHub: https://github.com/awslabs/or-rl-benchmarks
 '''
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import itertools
 import numpy as np
 from collections.abc import Iterable
@@ -72,8 +72,9 @@ class NewsvendorEnv(gym.Env):
 
     def _STEP(self, action):
         done = False
+        action_value = float(np.asarray(action).item())
         order_qty = max(0, # Ensure order > 0
-            min(action, self.max_inventory - self.state[5:].sum())) # Cap inventory
+            min(action_value, self.max_inventory - self.state[5:].sum())) # Cap inventory
         demand = np.random.poisson(self.mu)
         inventory = self.state[5:]
         if self.lead_time == 0: # No lead time -> instant fulfillment
@@ -93,7 +94,7 @@ class NewsvendorEnv(gym.Env):
         new_inventory = np.zeros(self.lead_time)
         new_inventory[:-1] += inventory[1:]
         new_inventory[-1] += order_qty
-        self.state = np.hstack([self.state[:5], new_inventory] , dtype=np.float32)
+        self.state = np.hstack([self.state[:5], new_inventory]).astype(np.float32)
 
         self.step_count += 1
         if self.step_count >= self.step_limit:

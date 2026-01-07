@@ -1,7 +1,7 @@
 import numpy as np
-import gym
-from gym import spaces, logger
-from gym.utils import seeding
+import gymnasium as gym
+from gymnasium import spaces, logger
+from gymnasium.utils import seeding
 from or_gym.utils import assign_env_config
 import copy
 
@@ -492,7 +492,7 @@ class OnlineKnapsackEnv(BoundedKnapsackEnv):
                 self.current_item,
                 current_item_weight,
                 self.item_values[self.current_item]
-                ],)
+                ], dtype=np.int32)
         if self.mask:
             mask = np.ones(2, dtype=np.uint8)
             if current_item_weight + self.current_weight > self.max_weight:

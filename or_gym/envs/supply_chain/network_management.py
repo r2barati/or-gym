@@ -4,15 +4,25 @@ Hector Perez, Christian Hubbs, Can Li
 9/14/2020
 '''
 
-import gym
-import itertools
+import gymnasium as gym
 import numpy as np
 import networkx as nx
 import pandas as pd
-from scipy.stats import *
-from or_gym.utils import assign_env_config
-from collections import deque
+from scipy.stats import poisson
 import matplotlib.pyplot as plt
+
+def assign_env_config(self, kwargs):
+    for key, value in kwargs.items():
+        setattr(self, key, value)
+    if hasattr(self, 'env_config'):
+        for key, value in self.env_config.items():
+            if hasattr(self, key):
+                if type(getattr(self, key)) == np.ndarray:
+                    setattr(self, key, value)
+                else:
+                    setattr(self, key, type(getattr(self, key))(value))
+            else:
+                raise AttributeError(f"{self} has no attribute, {key}")
 
 class NetInvMgmtMasterEnv(gym.Env):
     '''
@@ -275,13 +285,16 @@ class NetInvMgmtMasterEnv(gym.Env):
         # intialize
         self.reset()
 
-    def seed(self,seed=None):
+    def seed(self, seed=None):
         '''
         Set random number generation seed
         '''
-        # seed random state
-        if seed != None:
-            np.random.seed(seed=int(seed))
+        if seed is not None:
+            self.np_random = np.random.default_rng(seed=int(seed))
+            self.seed_int = int(seed)
+        elif not hasattr(self, 'np_random'):
+            self.np_random = np.random.default_rng()
+        return [seed]
         
     def _RESET(self):
         '''
@@ -421,8 +434,12 @@ class NetInvMgmtMasterEnv(gym.Env):
                     self.D.loc[t,(j,k)] = Demand[t]
                 else:
                     Demand = self.graph.edges[(j,k)]['demand_dist']
-                    self.D.loc[t,(j,k)] = Demand.rvs(
-                        **self.graph.edges[(j,k)]['dist_param'])
+                    if hasattr(Demand, 'rvs'):
+                        self.D.loc[t,(j,k)] = Demand.rvs(
+                            **self.graph.edges[(j,k)]['dist_param'],
+                            random_state=self.np_random)
+                    else:
+                        self.D.loc[t,(j,k)] = Demand()
                 if self.backlog and t >= 1:
                     D = self.D.loc[t,(j,k)] + self.U.loc[t-1,(j,k)]
                 else:
@@ -460,13 +477,15 @@ class NetInvMgmtMasterEnv(gym.Env):
         
         # determine if simulation should terminate
         if self.period >= self.num_periods:
-            done = True
+            terminated = False
+            truncated = True
         else:
-            done = False
+            terminated = False
+            truncated = False
             # update stae
             self._update_state()
 
-        return self.state, reward, done, {}
+        return self.state, reward, terminated, truncated, {}
     
     def sample_action(self):
         '''
@@ -477,8 +496,13 @@ class NetInvMgmtMasterEnv(gym.Env):
     def step(self, action):
         return self._STEP(action)
 
-    def reset(self):
-        return self._RESET()
+    def reset(self, *, seed=None, options=None):
+        super().reset(seed=seed)
+        if seed is not None:
+            self.seed(seed)
+            self.action_space.seed(seed)
+            self.observation_space.seed(seed)
+        return self._RESET(), {}
 
     def plot_network(self):
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -533,3 +557,18 @@ class NetInvMgmtLostSalesEnv(NetInvMgmtMasterEnv):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.backlog = False
+
+
+if __name__ == '__main__':
+    env = NetInvMgmtBacklogEnv()
+    episodes = 3
+    for episode in range(episodes):
+        obs, info = env.reset(seed=episode)
+        terminated = False
+        truncated = False
+        total_reward = 0.0
+        while not (terminated or truncated):
+            action = env.action_space.sample()
+            obs, reward, terminated, truncated, info = env.step(action)
+            total_reward += reward
+        print(f"Episode {episode + 1}: total_reward={total_reward:.2f}")
